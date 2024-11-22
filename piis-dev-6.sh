@@ -182,7 +182,7 @@ apt-get install libraspberrypi-dev raspberrypi-kernel-headers
 apt-get install -y python3-pip python3-dev python3-pil python3-smbus libatlas-base-dev
 # WAS: pip3 install numpy pi3d==2.34 svg.path rpi-gpio adafruit-ads1x15
 apt install python3-venv
-mkdir -p /home/pi/.env && python3 -m venv /home/pi/.env/piis_dev
+mkdir -p ~/.env && python3 -m venv ~/.env/piis_dev
 source /home/pi/.env/piis_dev/bin/activate
 /home/pi/.env/piis_dev/bin/python -m pip install --upgrade pip
 pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
@@ -191,9 +191,9 @@ pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 # enabled; simplifies the Python code a little (no "uncomment this")
 
 echo "Installing Adafruit code and data in /dev..."
-mkdir -p /home/pi/dev
-cd /home/pi/dev
-git clone https://github.com/lryain/piis.git /home/pi/dev/piis_dev
+# mkdir -p ~/dev
+cd ~/dev
+git clone https://github.com/lryain/piis.git ~/dev/piis_dev
 # Moving between filesystems requires copy-and-delete:
 if [ $INSTALL_HALT -ne 0 ]; then
   echo "Installing gpio-halt in /usr/local/bin..."
@@ -216,21 +216,21 @@ if [ $IS_PI4 ]; then
   ln -fs /lib/systemd/system/getty@.service /etc/systemd/system/getty.target.wants/getty@tty1.service
   rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf
 
-  # Pi3D requires "fake" KMS overlay to work. Check /boot/config.txt for
+  # Pi3D requires "fake" KMS overlay to work. Check /boot/firmware/config.txt for
   # vc4-fkms-v3d overlay present and active. If so, nothing to do here,
   # module's already configured.
-  grep '^dtoverlay=vc4-fkms-v3d' /boot/config.txt >/dev/null
+  grep '^dtoverlay=vc4-fkms-v3d' /boot/firmware/config.txt >/dev/null
   if [ $? -ne 0 ]; then
     # fkms overlay not present, or is commented out. Check if vc4-kms-v3d
     # (no 'f') is present and active. That's normally the default.
-    grep '^dtoverlay=vc4-kms-v3d' /boot/config.txt >/dev/null
+    grep '^dtoverlay=vc4-kms-v3d' /boot/firmware/config.txt >/dev/null
     if [ $? -eq 0 ]; then
       # It IS present. Comment out that line for posterity, and insert the
       # 'fkms' item on the next line.
-      sed -i "s/^dtoverlay=vc4-kms-v3d/#&\ndtoverlay=vc4-fkms-v3d/g" /boot/config.txt >/dev/null
+      sed -i "s/^dtoverlay=vc4-kms-v3d/#&\ndtoverlay=vc4-fkms-v3d/g" /boot/firmware/config.txt >/dev/null
     else
       # It's NOT present. Silently append 'fkms' overlay to end of file.
-      echo dtoverlay=vc4-fkms-v3d | sudo tee -a /boot/config.txt >/dev/null
+      echo dtoverlay=vc4-fkms-v3d | sudo tee -a /boot/firmware/config.txt >/dev/null
     fi
   fi
 
@@ -252,15 +252,15 @@ raspi-config nonint do_overscan 1
 # sudo raspi-config nonint do_memory_split 256
 
 # HDMI settings for Pi eyes
-reconfig /boot/config.txt "^.*hdmi_force_hotplug.*$" "hdmi_force_hotplug=1"
-reconfig /boot/config.txt "^.*hdmi_group.*$" "hdmi_group=2"
-reconfig /boot/config.txt "^.*hdmi_mode.*$" "hdmi_mode=87"
+reconfig /boot/firmware/config.txt "^.*hdmi_force_hotplug.*$" "hdmi_force_hotplug=1"
+reconfig /boot/firmware/config.txt "^.*hdmi_group.*$" "hdmi_group=2"
+reconfig /boot/firmware/config.txt "^.*hdmi_mode.*$" "hdmi_mode=87"
 if [ $SCREEN_SELECT -eq 3 ]; then
   # IPS display - set HDMI to 1280x720
-  reconfig /boot/config.txt "^.*hdmi_cvt.*$" "hdmi_cvt=1280 720 60 1 0 0 0"
+  reconfig /boot/firmware/config.txt "^.*hdmi_cvt.*$" "hdmi_cvt=1280 720 60 1 0 0 0"
 else
   # All others - set HDMI to 640x480
-  reconfig /boot/config.txt "^.*hdmi_cvt.*$" "hdmi_cvt=640 480 60 1 0 0 0"
+  reconfig /boot/firmware/config.txt "^.*hdmi_cvt.*$" "hdmi_cvt=640 480 60 1 0 0 0"
 fi
 
 
@@ -288,12 +288,12 @@ if [ $SCREEN_SELECT -ne 4 ]; then
   # Enable SPI0 using raspi-config
   raspi-config nonint do_spi 0
 
-  # Enable SPI1 by adding overlay to /boot/config.txt
-  reconfig /boot/config.txt "^.*dtparam=spi1.*$" "dtparam=spi1=on"
-  reconfig /boot/config.txt "^.*dtoverlay=spi1.*$" "dtoverlay=spi1-3cs"
+  # Enable SPI1 by adding overlay to /boot/firmware/config.txt
+  reconfig /boot/firmware/config.txt "^.*dtparam=spi1.*$" "dtparam=spi1=on"
+  reconfig /boot/firmware/config.txt "^.*dtoverlay=spi1.*$" "dtoverlay=spi1-3cs"
 
   # Adjust spidev buffer size to 8K (default is 4K)
-  reconfig2 /boot/cmdline.txt "spidev\.bufsiz=.*" "spidev.bufsiz=8192"
+  reconfig2 /boot/firmware/cmdline.txt "spidev\.bufsiz=.*" "spidev.bufsiz=8192"
 
   SCREEN_OPT=${SCREEN_VALUES[($SCREEN_SELECT-1)]}
 
@@ -349,11 +349,11 @@ else
 fi
 
 if [ $INSTALL_GADGET -ne 0 ]; then
-  reconfig /boot/config.txt "^.*dtoverlay=dwc2.*$" "dtoverlay=dwc2"
-  grep "modules-load=dwc2,g_ether" /boot/cmdline.txt >/dev/null
+  reconfig /boot/firmware/config.txt "^.*dtoverlay=dwc2.*$" "dtoverlay=dwc2"
+  grep "modules-load=dwc2,g_ether" /boot/firmware/cmdline.txt >/dev/null
   if [ $? -ne 0 ]; then
     # Insert ethernet gadget into config.txt after 'rootwait'
-    sed -i "s/rootwait/rootwait modules-load=dwc2,g_ether/g" /boot/cmdline.txt >/dev/null
+    sed -i "s/rootwait/rootwait modules-load=dwc2,g_ether/g" /boot/firmware/cmdline.txt >/dev/null
   fi
 fi
 
