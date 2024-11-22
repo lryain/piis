@@ -301,10 +301,10 @@ if [ $SCREEN_SELECT -ne 4 ]; then
   grep piisd /etc/rc.local >/dev/null
   if [ $? -eq 0 ]; then
     # piisd already in rc.local, but make sure correct:
-    sed -i "s/^.*piisd.*$/\/dev\/piis_dev\/piisd $SCREEN_OPT \&/g" /etc/rc.local >/dev/null
+    sed -i "s/^.*piisd.*$/\/home/pi/dev\/piis_dev\/piisd $SCREEN_OPT \&/g" /etc/rc.local >/dev/null
   else
     # Insert piisd into rc.local before final 'exit 0'
-    sed -i "s/^exit 0/\/dev\/piis_dev\/piisd $SCREEN_OPT \&\\nexit 0/g" /etc/rc.local >/dev/null
+    sed -i "s/^exit 0/\/home/pi/dev\/piis_dev\/piisd $SCREEN_OPT \&\\nexit 0/g" /etc/rc.local >/dev/null
   fi
 
   RADIUS=${RADIUS_VALUES[($SCREEN_SELECT-1)]}
