@@ -8,7 +8,7 @@ CFLAGS=-Wall -Ofast -fomit-frame-pointer -funroll-loops \
  -L/opt/vc/lib
 LIBS=-pthread -lrt -lm -lbcm_host
 
-fbx2: piisd.c
+piisd: piisd.c
 	cc $(CFLAGS) piisd.c $(LIBS) -o piisd
 	strip piisd
 

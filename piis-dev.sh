@@ -178,15 +178,22 @@ apt-get update
 
 echo "Installing Python libraries..."
 # WAS: apt-get install -y --force-yes python-pip python-dev python-imaging python-smbus
-apt-get install -y python3-pip python3-dev python3-pil python3-smbus libatlas-base-dev
+# sudo apt-get install libraspberrypi-dev raspberrypi-kernel-headers
+# apt-get install -y python3-pip python3-dev python3-pil python3-smbus libatlas-base-dev
 # WAS: pip3 install numpy pi3d==2.34 svg.path rpi-gpio adafruit-ads1x15
-pip3 install numpy pi3d svg.path rpi-gpio adafruit-blinka adafruit-circuitpython-ads1x15
+# sudo apt install python3-venv
+# mkdir -p ~/.env && python3 -m venv ~/.env/piis_dev
+source /home/pi/.env/piis_dev/bin/activate
+# python -m pip install --upgrade pip
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+/home/pi/.env/piis_dev/bin/pip install numpy pi3d svg.path rpi-gpio adafruit-blinka adafruit-circuitpython-ads1x15
 # smbus and Blinka+ADC libs are installed regardless whether ADC is
 # enabled; simplifies the Python code a little (no "uncomment this")
 
 echo "Installing Adafruit code and data in /dev..."
+mkdir -p ~/dev
 cd /dev
-git clone https://github.com/lryain/piis.git piis_dev
+git clone https://github.com/lryain/piis.git ~/dev/piis_dev
 # Moving between filesystems requires copy-and-delete:
 if [ $INSTALL_HALT -ne 0 ]; then
   echo "Installing gpio-halt in /usr/local/bin..."
@@ -290,14 +297,14 @@ if [ $SCREEN_SELECT -ne 4 ]; then
 
   SCREEN_OPT=${SCREEN_VALUES[($SCREEN_SELECT-1)]}
 
-  # Auto-start piis on boot
-  grep piis /etc/rc.local >/dev/null
+  # Auto-start piisd on boot
+  grep piisd /etc/rc.local >/dev/null
   if [ $? -eq 0 ]; then
-    # piis already in rc.local, but make sure correct:
-    sed -i "s/^.*piis.*$/\/dev\/piis_dev\/piis $SCREEN_OPT \&/g" /etc/rc.local >/dev/null
+    # piisd already in rc.local, but make sure correct:
+    sed -i "s/^.*piisd.*$/\/dev\/piis_dev\/piisd $SCREEN_OPT \&/g" /etc/rc.local >/dev/null
   else
-    # Insert piis into rc.local before final 'exit 0'
-    sed -i "s/^exit 0/\/dev\/piis_dev\/piis $SCREEN_OPT \&\\nexit 0/g" /etc/rc.local >/dev/null
+    # Insert piisd into rc.local before final 'exit 0'
+    sed -i "s/^exit 0/\/dev\/piis_dev\/piisd $SCREEN_OPT \&\\nexit 0/g" /etc/rc.local >/dev/null
   fi
 
   RADIUS=${RADIUS_VALUES[($SCREEN_SELECT-1)]}
