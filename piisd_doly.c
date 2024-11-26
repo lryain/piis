@@ -362,10 +362,12 @@ int main(int argc, char *argv[]) {
 	gpioSet = &gpio[7];
 	gpioClr = &gpio[10];
 
-	if((eye[0].fd = open("/dev/spidev0.0", O_WRONLY|O_NONBLOCK)) < 0)
-		err(3, "Can't open spidev0.0, is SPI enabled?");
-	if((eye[1].fd = open("/dev/spidev0.1", O_WRONLY|O_NONBLOCK)) < 0)
-		err(4, "Can't open spidev0.1, is spi1-3cs overlay enabled?");
+	// if((eye[0].fd = open("/dev/spidev0.0", O_WRONLY|O_NONBLOCK)) < 0)
+	if((eye[0].fd = open("/dev/doly_lcd", O_WRONLY|O_NONBLOCK)) < 0)
+		err(3, "Can't open doly_lcd, is SPI enabled?");
+	// if((eye[1].fd = open("/dev/spidev0.1", O_WRONLY|O_NONBLOCK)) < 0)
+	if((eye[1].fd = open("/dev/doly_lcd", O_WRONLY|O_NONBLOCK)) < 0)
+		err(4, "Can't open doly_lcd, is spi1-3cs overlay enabled?");
 
 	xfer.speed_hz = bitrate;
 	uint8_t  mode = SPI_MODE_0;
