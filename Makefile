@@ -1,5 +1,5 @@
 all: piisd
-doly: piisd-doly
+doly: piisd_doly
 
 CFLAGS=-Wall -Ofast -fomit-frame-pointer -funroll-loops \
  -I/opt/vc/include \
@@ -13,10 +13,10 @@ piisd: piisd.c
 	cc $(CFLAGS) piisd.c $(LIBS) -o piisd
 	strip piisd
 
-piisd: piisd_doly.c
-	cc $(CFLAGS) piisd.c $(LIBS) -o piisd
-	strip piisd-doly
+piisd_doly: piisd_doly.c
+	cc $(CFLAGS) piisd_doly.c $(LIBS) -o piisd_doly
+	strip piisd_doly
 
 clean:
 	rm -f piisd
-	rm -f piisd-doly
+	rm -f piisd_doly
