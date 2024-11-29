@@ -280,7 +280,7 @@ if [ $INSTALL_HALT -ne 0 ]; then
   fi
 fi
 
-# If using OLED, TFT or IPS, enable SPI and install piisd and eyes.py,
+# If using OLED, TFT or IPS, enable SPI and install piisd and piis.py,
 # else (HDMI) skip SPI, piisd and install cyclops.py (single eye)
 if [ $SCREEN_SELECT -ne 4 ]; then
 
@@ -307,22 +307,22 @@ if [ $SCREEN_SELECT -ne 4 ]; then
   fi
 
   RADIUS=${RADIUS_VALUES[($SCREEN_SELECT-1)]}
-  # Auto-start eyes.py on boot
-  grep eyes.py /etc/rc.local >/dev/null
+  # Auto-start piis.py on boot
+  grep piis.py /etc/rc.local >/dev/null
   if [ $? -eq 0 ]; then
-    # eyes.py already in rc.local, but make sure correct:
+    # piis.py already in rc.local, but make sure correct:
     if [ $IS_PI4 ]; then
     #   /home/pi/.venv/pi3d-dev/bin/python
-      sed -i "s/^.*eyes.py.*$/cd \/boot\/piis;xinit \/home\/pi\/.venv\/pi3d-dev\/bin\/python3 eyes.py --radius $RADIUS \:0 \&/g" /etc/rc.local >/dev/null
+      sed -i "s/^.*piis.py.*$/cd \/boot\/piis;xinit \/home\/pi\/.venv\/pi3d-dev\/bin\/python3 piis.py --radius $RADIUS \:0 \&/g" /etc/rc.local >/dev/null
     else
-      sed -i "s/^.*eyes.py.*$/cd \/boot\/piis;python3 eyes.py --radius $RADIUS \&/g" /etc/rc.local >/dev/null
+      sed -i "s/^.*piis.py.*$/cd \/boot\/piis;python3 piis.py --radius $RADIUS \&/g" /etc/rc.local >/dev/null
     fi
   else
-    # Insert eyes.py into rc.local before final 'exit 0'
+    # Insert piis.py into rc.local before final 'exit 0'
     if [ $IS_PI4 ]; then
-      sed -i "s/^exit 0/cd \/boot\/piis;xinit \/home\/pi\/.venv\/pi3d-dev\/bin\/python3 eyes.py --radius $RADIUS \:0 \&\\nexit 0/g" /etc/rc.local >/dev/null
+      sed -i "s/^exit 0/cd \/boot\/piis;xinit \/home\/pi\/.venv\/pi3d-dev\/bin\/python3 piis.py --radius $RADIUS \:0 \&\\nexit 0/g" /etc/rc.local >/dev/null
     else
-      sed -i "s/^exit 0/cd \/boot\/piis;python3 eyes.py --radius $RADIUS \&\\nexit 0/g" /etc/rc.local >/dev/null
+      sed -i "s/^exit 0/cd \/boot\/piis;python3 piis.py --radius $RADIUS \&\\nexit 0/g" /etc/rc.local >/dev/null
     fi
   fi
 
