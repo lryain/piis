@@ -186,12 +186,14 @@ apt-get install -y python3-pip python3-dev python3-pil python3-smbus libatlas-ba
 
 echo "Installing Adafruit code and data in /boot..."
 cd /tmp
+git config --global http.proxy http://192.168.3.8:7890
+git config --global https.proxy https://192.168.3.8:7890
+export https_proxy="http://192.168.3.8:7890/"
+export HTTPS_PROXY="http://192.168.3.8:7890/"
 git clone https://github.com/lryain/piis.git
-cd piis
-make clean
-make -j4
-cd ..
-cp -r piis /boot/piis
+rm -rf /boot/piis
+cp -r piis /boot
+chmod +x /boot/piis/piisd
 if [ $INSTALL_HALT -ne 0 ]; then
   echo "Installing gpio-halt in /usr/local/bin..."
   curl -LO https://github.com/adafruit/Adafruit-GPIO-Halt/archive/master.zip
@@ -310,14 +312,15 @@ if [ $SCREEN_SELECT -ne 4 ]; then
   if [ $? -eq 0 ]; then
     # eyes.py already in rc.local, but make sure correct:
     if [ $IS_PI4 ]; then
-      sed -i "s/^.*eyes.py.*$/cd \/boot\/piis;xinit \/usr\/bin\/python3 eyes.py --radius $RADIUS \:0 \&/g" /etc/rc.local >/dev/null
+    #   /home/pi/.venv/pi3d-dev/bin/python
+      sed -i "s/^.*eyes.py.*$/cd \/boot\/piis;xinit \/home\/pi\/.venv\/pi3d-dev\/bin\/python3 eyes.py --radius $RADIUS \:0 \&/g" /etc/rc.local >/dev/null
     else
       sed -i "s/^.*eyes.py.*$/cd \/boot\/piis;python3 eyes.py --radius $RADIUS \&/g" /etc/rc.local >/dev/null
     fi
   else
     # Insert eyes.py into rc.local before final 'exit 0'
     if [ $IS_PI4 ]; then
-      sed -i "s/^exit 0/cd \/boot\/piis;xinit \/usr\/bin\/python3 eyes.py --radius $RADIUS \:0 \&\\nexit 0/g" /etc/rc.local >/dev/null
+      sed -i "s/^exit 0/cd \/boot\/piis;xinit \/home\/pi\/.venv\/pi3d-dev\/bin\/python3 eyes.py --radius $RADIUS \:0 \&\\nexit 0/g" /etc/rc.local >/dev/null
     else
       sed -i "s/^exit 0/cd \/boot\/piis;python3 eyes.py --radius $RADIUS \&\\nexit 0/g" /etc/rc.local >/dev/null
     fi
