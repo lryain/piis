@@ -180,17 +180,18 @@ echo "Installing Python libraries..."
 # WAS: apt-get install -y --force-yes python-pip python-dev python-imaging python-smbus
 apt-get install -y python3-pip python3-dev python3-pil python3-smbus libatlas-base-dev
 # WAS: pip3 install numpy pi3d==2.34 svg.path rpi-gpio adafruit-ads1x15
-pip3 install numpy pi3d svg.path rpi-gpio adafruit-blinka adafruit-circuitpython-ads1x15
+/home/pi/.venv/pi3d-dev/bin/pip install numpy pi3d svg.path rpi-gpio adafruit-blinka adafruit-circuitpython-ads1x15
 # smbus and Blinka+ADC libs are installed regardless whether ADC is
 # enabled; simplifies the Python code a little (no "uncomment this")
 
 echo "Installing Adafruit code and data in /boot..."
 cd /tmp
-curl -LO https://github.com/lryain/piis/archive/master.zip
-unzip master.zip
-# Moving between filesystems requires copy-and-delete:
-cp -r piis-main /boot/piis
-rm -rf piis-main.zip piis-main
+git clone https://github.com/lryain/piis.git
+cd piis
+make clean
+make -j4
+cd ..
+cp -r piis /boot/piis
 if [ $INSTALL_HALT -ne 0 ]; then
   echo "Installing gpio-halt in /usr/local/bin..."
   curl -LO https://github.com/adafruit/Adafruit-GPIO-Halt/archive/master.zip
@@ -277,30 +278,30 @@ if [ $INSTALL_HALT -ne 0 ]; then
   fi
 fi
 
-# If using OLED, TFT or IPS, enable SPI and install fbx2 and eyes.py,
-# else (HDMI) skip SPI, fbx2 and install cyclops.py (single eye)
+# If using OLED, TFT or IPS, enable SPI and install piisd and eyes.py,
+# else (HDMI) skip SPI, piisd and install cyclops.py (single eye)
 if [ $SCREEN_SELECT -ne 4 ]; then
 
   # Enable SPI0 using raspi-config
   raspi-config nonint do_spi 0
 
   # Enable SPI1 by adding overlay to /boot/firmware/config.txt
-  reconfig /boot/firmware/config.txt "^.*dtparam=spi1.*$" "dtparam=spi1=on"
-  reconfig /boot/firmware/config.txt "^.*dtoverlay=spi1.*$" "dtoverlay=spi1-3cs"
+  #reconfig /boot/firmware/config.txt "^.*dtparam=spi1.*$" "dtparam=spi1=on"
+  #reconfig /boot/firmware/config.txt "^.*dtoverlay=spi1.*$" "dtoverlay=spi1-3cs"
 
   # Adjust spidev buffer size to 8K (default is 4K)
   reconfig2 /boot/firmware/cmdline.txt "spidev\.bufsiz=.*" "spidev.bufsiz=8192"
 
   SCREEN_OPT=${SCREEN_VALUES[($SCREEN_SELECT-1)]}
 
-  # Auto-start fbx2 on boot
-  grep fbx2 /etc/rc.local >/dev/null
+  # Auto-start piisd on boot
+  grep piisd /etc/rc.local >/dev/null
   if [ $? -eq 0 ]; then
-    # fbx2 already in rc.local, but make sure correct:
-    sed -i "s/^.*fbx2.*$/\/boot\/Pi_Eyes\/fbx2 $SCREEN_OPT \&/g" /etc/rc.local >/dev/null
+    # piisd already in rc.local, but make sure correct:
+    sed -i "s/^.*piisd.*$/\/boot\/piis\/piisd $SCREEN_OPT \&/g" /etc/rc.local >/dev/null
   else
-    # Insert fbx2 into rc.local before final 'exit 0'
-    sed -i "s/^exit 0/\/boot\/Pi_Eyes\/fbx2 $SCREEN_OPT \&\\nexit 0/g" /etc/rc.local >/dev/null
+    # Insert piisd into rc.local before final 'exit 0'
+    sed -i "s/^exit 0/\/boot\/piis\/piisd $SCREEN_OPT \&\\nexit 0/g" /etc/rc.local >/dev/null
   fi
 
   RADIUS=${RADIUS_VALUES[($SCREEN_SELECT-1)]}
@@ -309,16 +310,16 @@ if [ $SCREEN_SELECT -ne 4 ]; then
   if [ $? -eq 0 ]; then
     # eyes.py already in rc.local, but make sure correct:
     if [ $IS_PI4 ]; then
-      sed -i "s/^.*eyes.py.*$/cd \/boot\/Pi_Eyes;xinit \/usr\/bin\/python3 eyes.py --radius $RADIUS \:0 \&/g" /etc/rc.local >/dev/null
+      sed -i "s/^.*eyes.py.*$/cd \/boot\/piis;xinit \/usr\/bin\/python3 eyes.py --radius $RADIUS \:0 \&/g" /etc/rc.local >/dev/null
     else
-      sed -i "s/^.*eyes.py.*$/cd \/boot\/Pi_Eyes;python3 eyes.py --radius $RADIUS \&/g" /etc/rc.local >/dev/null
+      sed -i "s/^.*eyes.py.*$/cd \/boot\/piis;python3 eyes.py --radius $RADIUS \&/g" /etc/rc.local >/dev/null
     fi
   else
     # Insert eyes.py into rc.local before final 'exit 0'
     if [ $IS_PI4 ]; then
-      sed -i "s/^exit 0/cd \/boot\/Pi_Eyes;xinit \/usr\/bin\/python3 eyes.py --radius $RADIUS \:0 \&\\nexit 0/g" /etc/rc.local >/dev/null
+      sed -i "s/^exit 0/cd \/boot\/piis;xinit \/usr\/bin\/python3 eyes.py --radius $RADIUS \:0 \&\\nexit 0/g" /etc/rc.local >/dev/null
     else
-      sed -i "s/^exit 0/cd \/boot\/Pi_Eyes;python3 eyes.py --radius $RADIUS \&\\nexit 0/g" /etc/rc.local >/dev/null
+      sed -i "s/^exit 0/cd \/boot\/piis;python3 eyes.py --radius $RADIUS \&\\nexit 0/g" /etc/rc.local >/dev/null
     fi
   fi
 
@@ -329,16 +330,16 @@ else
   if [ $? -eq 0 ]; then
     # cyclops.py already in rc.local, but make sure correct:
     if [ $IS_PI4 ]; then
-      sed -i "s/^.*cyclops.py.*$/cd \/boot\/Pi_Eyes;xinit \/usr\/bin\/python3 cyclops.py \:0 \&/g" /etc/rc.local >/dev/null
+      sed -i "s/^.*cyclops.py.*$/cd \/boot\/piis;xinit \/usr\/bin\/python3 cyclops.py \:0 \&/g" /etc/rc.local >/dev/null
     else
-      sed -i "s/^.*cyclops.py.*$/cd \/boot\/Pi_Eyes;python3 cyclops.py \&/g" /etc/rc.local >/dev/null
+      sed -i "s/^.*cyclops.py.*$/cd \/boot\/piis;python3 cyclops.py \&/g" /etc/rc.local >/dev/null
     fi
   else
     # Insert cyclops.py into rc.local before final 'exit 0'
     if [ $IS_PI4 ]; then
-      sed -i "s/^exit 0/cd \/boot\/Pi_Eyes;xinit \/usr\/bin\/python3 cyclops.py \:0 \&\\nexit 0/g" /etc/rc.local >/dev/null
+      sed -i "s/^exit 0/cd \/boot\/piis;xinit \/usr\/bin\/python3 cyclops.py \:0 \&\\nexit 0/g" /etc/rc.local >/dev/null
     else
-      sed -i "s/^exit 0/cd \/boot\/Pi_Eyes;python3 cyclops.py \&\\nexit 0/g" /etc/rc.local >/dev/null
+      sed -i "s/^exit 0/cd \/boot\/piis;python3 cyclops.py \&\\nexit 0/g" /etc/rc.local >/dev/null
     fi
   fi
 
